@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stef (@stef)</title>
+    
+    <meta property="og:title" content="Stef (@stef)">
+    <meta property="og:description" content="hi wow">
+    <meta property="og:image" content="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAMCAgICAgICAgICAgICAggCAgICAgoHBwYIAgoCAgIKAgICAgYFAgIFAgICBQoFBQcICQkJAgMLDAoIDAYICQgBAwQEAgICCQICCQgCAgIICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICP/AABEIAEEAWQMBIgACEQEDEQH/xAAVAAEBAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8AlUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//2Q==">
+    <meta name="theme-color" content="#ffffff">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --accent: #ffffff;
+            --accent-glow: #ffffff;
+            --bg-color: #09090b;
+            --card-width: 480px;
+            --card-radius: 24px;
+            --card-blur: 16px;
+            --card-opacity: 0.45;
+            --avatar-radius: 50%;
+            --font-main: 'Space Grotesk', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #ffffff;
+            font-family: var(--font-main);
+            min-height: 100vh;
+            width: 100%;
+            overflow-x: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            
+        }
+
+        /* Custom Cursor */
+        #cursor-dot, #cursor-trail {
+            position: fixed;
+            pointer-events: none;
+            z-index: 99999;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+        }
+        #cursor-dot {
+            width: 7px;
+            height: 7px;
+            background: #fff;
+            box-shadow: 0 0 10px var(--accent);
+        }
+        #cursor-trail {
+            width: 28px;
+            height: 28px;
+            border: 1.5px solid var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+            transition: width 0.2s, height 0.2s, transform 0.08s ease-out;
+        }
+
+        /* Click Sparkles */
+        .sparkle-particle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 99998;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 0 10px var(--accent-glow);
+            transform: translate(-50%, -50%);
+            animation: sparkle-anim 0.75s ease-out forwards;
+        }
+        @keyframes sparkle-anim {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        /* Background Canvas / Media */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .bg-media {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            object-fit: cover;
+            filter: brightness(0.4) contrast(1.1);
+            pointer-events: none;
+        }
+
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 6px 100%;
+            pointer-events: none;
+            z-index: 10;
+            display: none;
+        }
+
+        /* Click to Enter Screen */
+        #entry-screen {
+            position: fixed;
+            inset: 0;
+            background: rgba(9, 9, 11, 0.94);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.7s;
+            cursor: pointer;
+        }
+        #entry-screen.fade-out {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .entry-content {
+            text-align: center;
+            animation: pulse-glow 2.5s infinite ease-in-out;
+        }
+        .entry-title {
+            font-family: var(--font-mono);
+            font-size: 1.25rem;
+            letter-spacing: 3px;
+            color: #d1d5db;
+            text-shadow: 0 0 15px var(--accent-glow);
+        }
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); opacity: 0.8; text-shadow: 0 0 10px var(--accent); }
+            50% { transform: scale(1.04); opacity: 1; text-shadow: 0 0 25px var(--accent-glow); }
+        }
+
+        /* Main Container & Card */
+        .app-container {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: var(--card-width);
+            padding: 24px 16px;
+            perspective: 1200px;
+        }
+
+        .bio-card {
+            background: rgba(18, 18, 24, var(--card-opacity));
+            backdrop-filter: blur(var(--card-blur));
+            -webkit-backdrop-filter: blur(var(--card-blur));
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--card-radius);
+            padding: 34px 28px 28px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75), 0 0 40px rgba(139, 92, 246, 0.15);
+            position: relative;
+            transform-style: preserve-3d;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            overflow: hidden;
+        }
+        .bio-card:hover {
+            border-color: rgba(168, 85, 247, 0.35);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 50px rgba(139, 92, 246, 0.28);
+        }
+
+        .card-banner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 110px;
+            background-size: cover;
+            background-position: center;
+            filter: brightness(0.7);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .has-banner .card-header {
+            margin-top: 35px;
+        }
+
+        .card-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .avatar-wrap {
+            position: relative;
+            margin-bottom: 18px;
+        }
+        .avatar-img {
+            width: 106px;
+            height: 106px;
+            border-radius: var(--avatar-radius);
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 25px rgba(139, 92, 246, 0.35);
+            display: block;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            
+        }
+        @keyframes rainbow-border {
+            0% { border-color: #ef4444; box-shadow: 0 0 20px #ef4444; }
+            33% { border-color: #3b82f6; box-shadow: 0 0 20px #3b82f6; }
+            66% { border-color: #22c55e; box-shadow: 0 0 20px #22c55e; }
+            100% { border-color: #ef4444; box-shadow: 0 0 20px #ef4444; }
+        }
+        .bio-card:hover .avatar-img {
+            transform: scale(1.05) rotate(1.5deg);
+        }
+
+        .status-dot {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 3px solid #121218;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
+        }
+        .status-online { background-color: #22c55e; box-shadow: 0 0 12px #22c55e; }
+        .status-dnd { background-color: #ef4444; box-shadow: 0 0 12px #ef4444; }
+        .status-idle { background-color: #f59e0b; box-shadow: 0 0 12px #f59e0b; }
+        .status-offline { background-color: #6b7280; }
+
+        .name-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .display-name {
+            font-size: 1.85rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.25);
+        }
+        .badges-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 8px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .badge-item {
+            width: 17px;
+            height: 17px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+        .badge-item:hover { transform: scale(1.25); }
+        .badge-item svg { width: 100%; height: 100%; }
+
+        .username-tag {
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            color: #a1a1aa;
+            margin-top: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .tags-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .meta-pill {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 3px 10px;
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .bio-text {
+            font-size: 0.95rem;
+            color: #d4d4d8;
+            margin: 18px 0 14px;
+            line-height: 1.55;
+            text-align: center;
+            padding: 0 6px;
+        }
+
+        /* --- STUNNING LINKED ACCOUNT CARDS (Discord & Roblox) --- */
+        .accounts-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: 16px 0;
+            width: 100%;
+        }
+        .account-card {
+            border-radius: 16px;
+            padding: 13px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: #fff;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+        .account-card:hover {
+            transform: translateY(-3px) scale(1.01);
+        }
+
+        /* Discord Theme Card */
+        .discord-card {
+            background: linear-gradient(135deg, rgba(88, 101, 242, 0.12), rgba(28, 29, 44, 0.65));
+            border: 1px solid rgba(88, 101, 242, 0.35);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(88, 101, 242, 0.08);
+        }
+        .discord-card:hover {
+            border-color: rgba(88, 101, 242, 0.8);
+            box-shadow: 0 10px 30px rgba(88, 101, 242, 0.35), inset 0 0 20px rgba(88, 101, 242, 0.18);
+        }
+
+        /* Roblox Theme Card */
+        .roblox-card {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(35, 20, 24, 0.65));
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(239, 68, 68, 0.08);
+        }
+        .roblox-card:hover {
+            border-color: rgba(239, 68, 68, 0.8);
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.35), inset 0 0 20px rgba(239, 68, 68, 0.18);
+        }
+
+        .account-avatar-wrap {
+            position: relative;
+            flex-shrink: 0;
+        }
+        .account-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            background: #181820;
+            display: block;
+        }
+        .roblox-avatar {
+            border-color: rgba(239, 68, 68, 0.5);
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.25);
+            background: #1f1418;
+        }
+        .account-status-dot {
+            position: absolute;
+            bottom: 0px;
+            right: 0px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2.5px solid #14141c;
+        }
+
+        .account-details {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .account-name-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .account-name {
+            font-size: 0.98rem;
+            font-weight: 700;
+            color: #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            letter-spacing: -0.2px;
+        }
+        .platform-pill {
+            font-size: 0.72rem;
+            font-family: var(--font-mono);
+            padding: 3px 8px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 600;
+            flex-shrink: 0;
+            transition: transform 0.2s;
+        }
+        .account-card:hover .platform-pill {
+            transform: scale(1.05);
+        }
+        .platform-pill svg {
+            width: 13px;
+            height: 13px;
+        }
+        .arrow-icon {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+        .discord-pill { background: rgba(88, 101, 242, 0.25); color: #a5b4fc; border: 1px solid rgba(88, 101, 242, 0.5); }
+        .roblox-pill { background: rgba(239, 68, 68, 0.25); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.5); }
+
+        .account-sub {
+            font-size: 0.8rem;
+            color: #9ca3af;
+            font-family: var(--font-mono);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .spotify-activity {
+            font-size: 0.78rem;
+            color: #22c55e;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-family: var(--font-mono);
+        }
+        .spotify-eq {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 12px;
+            flex-shrink: 0;
+        }
+        .spotify-eq span {
+            width: 2.5px;
+            background: #22c55e;
+            border-radius: 1px;
+            animation: bounce-eq 0.8s ease infinite alternate;
+        }
+        .spotify-eq span:nth-child(2) { animation-delay: 0.25s; }
+        .spotify-eq span:nth-child(3) { animation-delay: 0.5s; }
+        @keyframes bounce-eq {
+            0% { height: 3px; }
+            100% { height: 12px; }
+        }
+
+        /* Socials Bar */
+        .socials-grid {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .social-btn {
+            position: relative;
+            width: 44px;
+            height: 44px;
+            border-radius: 13px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #d4d4d8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .social-btn svg { width: 20px; height: 20px; }
+        .social-btn:hover {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: var(--accent);
+            color: #ffffff;
+            transform: translateY(-4px) scale(1.08);
+            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.35);
+        }
+        .social-tooltip {
+            position: absolute;
+            bottom: -32px;
+            background: rgba(15, 15, 20, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 0.72rem;
+            font-family: var(--font-mono);
+            padding: 3px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s, transform 0.2s;
+            transform: translateY(4px);
+            z-index: 50;
+        }
+        .social-btn:hover .social-tooltip {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Audio Player Bar */
+        .audio-player {
+            margin-top: 22px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 16px;
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+        }
+        .audio-main-row { display: flex; align-items: center; gap: 14px; }
+        .disc-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #4c1d95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+            flex-shrink: 0;
+            animation: spin 6s linear infinite;
+            animation-play-state: paused;
+        }
+        .disc-icon.playing { animation-play-state: running; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .disc-icon svg { width: 18px; height: 18px; fill: #ffffff; }
+
+        .song-info { flex: 1; min-width: 0; }
+        .song-title { font-size: 0.88rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .song-artist { font-size: 0.75rem; color: #a1a1aa; font-family: var(--font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .audio-controls { display: flex; align-items: center; gap: 8px; }
+        .ctrl-btn {
+            background: none;
+            border: none;
+            color: #d4d4d8;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s, transform 0.2s;
+        }
+        .ctrl-btn:hover { color: var(--accent); transform: scale(1.15); }
+        .ctrl-btn svg { width: 20px; height: 20px; }
+
+        .volume-container { display: flex; align-items: center; gap: 6px; }
+        .volume-slider {
+            -webkit-appearance: none;
+            width: 55px;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            cursor: pointer;
+        }
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            box-shadow: 0 0 6px var(--accent-glow);
+        }
+
+        .seek-container { display: flex; align-items: center; gap: 10px; width: 100%; }
+        .seek-bar {
+            -webkit-appearance: none;
+            flex: 1;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.15);
+            outline: none;
+            cursor: pointer;
+        }
+        .seek-bar::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+        }
+        .time-text { font-size: 0.7rem; font-family: var(--font-mono); color: #9ca3af; }
+
+        .card-footer {
+            margin-top: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: #71717a;
+            padding: 0 4px;
+        }
+        .views-counter { display: flex; align-items: center; gap: 4px; }
+        .views-counter svg { width: 13px; height: 13px; fill: #71717a; }
+
+        
+
+        @media (max-width: 540px) {
+            .bio-card { padding: 26px 18px 20px; }
+            .display-name { font-size: 1.55rem; }
+            .avatar-img { width: 90px; height: 90px; }
+            .volume-container { display: none; }
+        }
+    </style>
+</head>
+<body class="">
+
+    <div id="cursor-dot"></div>
+    <div id="cursor-trail"></div>
+
+    <div class="scanlines"></div>
+
+    
+    
+
+    <canvas id="bg-canvas"></canvas>
+
+    <div id="entry-screen">
+        <div class="entry-content">
+            <div class="entry-title">[ click anywhere to enter ]</div>
+        </div>
+    </div>
+
+    <main class="app-container">
+        <div class="bio-card" id="bio-card">
+            
+            
+
+            <header class="card-header">
+                <div class="avatar-wrap">
+                    <img class="avatar-img" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAMCAgICAgICAgICAgICAggCAgICAgoHBwYIAgoCAgIKAgICAgYFAgIFAgICBQoFBQcICQkJAgMLDAoIDAYICQgBAwQEAgICCQICCQgCAgIICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICP/AABEIAEEAWQMBIgACEQEDEQH/xAAVAAEBAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8AlUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//2Q==" alt="Stef" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=fallback'">
+                    <span class="status-dot status-online" title="Status: Online"></span>
+                </div>
+
+                <div class="name-row">
+                    <h1 class="display-name" id="display-name">Stef</h1>
+                    
+                </div>
+
+                <div class="username-tag">@stef</div>
+
+                <div class="tags-row">
+                    
+                    
+                    
+                </div>
+            </header>
+
+            <p class="bio-text">hi wow</p>
+
+            <!-- Linked Accounts Section (Discord & Roblox) -->
+            
+            <div class="accounts-section">
+                
+        <a class="account-card discord-card" id="discord-widget" href="https://discord.com/users/1142374080113283082" target="_blank" rel="noopener noreferrer">
+            <div class="account-avatar-wrap">
+                <img id="discord-avatar" class="account-avatar" src="https://cdn.discordapp.com/embed/avatars/1.png" alt="Discord Avatar">
+                <span id="discord-status-dot" class="account-status-dot status-offline"></span>
+            </div>
+            <div class="account-details">
+                <div class="account-name-row">
+                    <span id="discord-name" class="account-name">Discord User</span>
+                    <span class="platform-pill discord-pill"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.893.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg> Discord <span class="arrow-icon">↗</span></span>
+                </div>
+                <div id="discord-status-text" class="account-sub">ID: 1142374080113283082</div>
+                <div id="discord-spotify" class="spotify-activity" style="display:none;">
+                    <div class="spotify-eq"><span></span><span></span><span></span></div>
+                    <span id="spotify-song-title">Listening to Spotify</span>
+                </div>
+            </div>
+        </a>
+        
+                
+        <a class="account-card roblox-card" id="roblox-widget" href="https://www.roblox.com/users/853189053/profile" target="_blank" rel="noopener noreferrer">
+            <div class="account-avatar-wrap">
+                <img id="roblox-avatar" class="account-avatar roblox-avatar" src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-4A71A09DE6F4AB2A4320E06E66ED38B2-Png/150/150/AvatarHeadshot/Png/noFilter" alt="Roblox Headshot">
+            </div>
+            <div class="account-details">
+                <div class="account-name-row">
+                    <span id="roblox-name" class="account-name">stef</span>
+                    <span class="platform-pill roblox-pill"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5.167 0L0 18.833 18.833 24 24 5.167 5.167 0zm10.74 13.91l-4.992 1.336-1.336-4.992 4.992-1.336 1.336 4.992z"/></svg> Roblox <span class="arrow-icon">↗</span></span>
+                </div>
+                <div id="roblox-handle" class="account-sub">@94stef • ID: 853189053</div>
+            </div>
+        </a>
+        
+            </div>
+            
+
+            <!-- Socials Grid -->
+            
+
+            <!-- Audio Player -->
+            
+
+            <!-- Optional Custom Footer -->
+            
+        <footer class="card-footer">
+            <span class="views-counter"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg><span id="view-count">1337</span></span>
+            <span></span>
+        </footer>
+        
+
+        </div>
+    </main>
+
+    <script>
+        // --- 1. Audio and Entry Screen ---
+        const entryScreen = document.getElementById('entry-screen');
+        const audio = document.getElementById('bg-audio');
+        const playBtn = document.getElementById('play-btn');
+        const playSvg = document.getElementById('play-svg');
+        const pauseSvg = document.getElementById('pause-svg');
+        const discIcon = document.getElementById('disc-icon');
+        const muteBtn = document.getElementById('mute-btn');
+        const volumeSlider = document.getElementById('volume-slider');
+        const seekBar = document.getElementById('seek-bar');
+        const curTime = document.getElementById('cur-time');
+        const durTime = document.getElementById('dur-time');
+
+        let isPlaying = false;
+        if (audio) {
+            audio.volume = 0.4;
+        }
+
+        function formatTime(s) {
+            if (!s || isNaN(s)) return "0:00";
+            const m = Math.floor(s / 60);
+            const sec = Math.floor(s % 60);
+            return `${m}:${sec < 10 ? '0' : ''}${sec}`;
+        }
+
+        function startExperience() {
+            entryScreen.classList.add('fade-out');
+            if (audio) {
+                audio.play().then(() => {
+                    isPlaying = true;
+                    updateAudioUI();
+                }).catch(e => console.log('Autoplay prevented:', e));
+            }
+        }
+
+        entryScreen.addEventListener('click', startExperience);
+
+        function updateAudioUI() {
+            if (!audio) return;
+            if (isPlaying) {
+                playSvg.style.display = 'none';
+                pauseSvg.style.display = 'block';
+                if (discIcon) discIcon.classList.add('playing');
+            } else {
+                playSvg.style.display = 'block';
+                pauseSvg.style.display = 'none';
+                if (discIcon) discIcon.classList.remove('playing');
+            }
+        }
+
+        if (playBtn && audio) {
+            playBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (audio.paused) {
+                    audio.play();
+                    isPlaying = true;
+                } else {
+                    audio.pause();
+                    isPlaying = false;
+                }
+                updateAudioUI();
+            });
+        }
+
+        if (audio && seekBar) {
+            audio.addEventListener('timeupdate', () => {
+                if (audio.duration) {
+                    seekBar.value = (audio.currentTime / audio.duration) * 100;
+                    if (curTime) curTime.textContent = formatTime(audio.currentTime);
+                    if (durTime) durTime.textContent = formatTime(audio.duration);
+                }
+            });
+            seekBar.addEventListener('input', (e) => {
+                if (audio.duration) {
+                    audio.currentTime = (e.target.value / 100) * audio.duration;
+                }
+            });
+        }
+
+        if (volumeSlider && audio) {
+            volumeSlider.addEventListener('input', (e) => {
+                audio.volume = parseFloat(e.target.value);
+            });
+        }
+
+        if (muteBtn && audio) {
+            muteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                audio.muted = !audio.muted;
+                muteBtn.style.opacity = audio.muted ? '0.4' : '1';
+            });
+        }
+
+        // --- 2. Live Discord Account Sync (via Lanyard API) ---
+        const discordId = "1142374080113283082";
+        if (discordId) {
+            fetch(`https://api.lanyard.rest/v1/users/${discordId}`)
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success && res.data) {
+                        const d = res.data;
+                        const user = d.discord_user;
+                        const discordName = document.getElementById('discord-name');
+                        const discordAvatar = document.getElementById('discord-avatar');
+                        const discordStatusDot = document.getElementById('discord-status-dot');
+                        const discordStatusText = document.getElementById('discord-status-text');
+                        const spotifyBox = document.getElementById('discord-spotify');
+                        const spotifyTitle = document.getElementById('spotify-song-title');
+
+                        if (discordName) discordName.textContent = user.global_name || user.username;
+                        if (discordAvatar && user.avatar) {
+                            const isGif = user.avatar.startsWith('a_');
+                            discordAvatar.src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${isGif ? 'gif' : 'png'}?size=128`;
+                        }
+                        if (discordStatusDot) {
+                            discordStatusDot.className = `account-status-dot status-${d.discord_status || 'offline'}`;
+                        }
+                        let customAct = d.activities && d.activities.find(a => a.type === 4);
+                        if (customAct && customAct.state && discordStatusText) {
+                            discordStatusText.textContent = customAct.state;
+                        } else if (d.activities && d.activities.length > 0 && discordStatusText) {
+                            const act = d.activities.find(a => a.type !== 4 && a.name);
+                            if (act) discordStatusText.textContent = `Playing ${act.name}`;
+                        }
+                        if (d.listening_to_spotify && d.spotify && spotifyBox && spotifyTitle) {
+                            spotifyTitle.textContent = `${d.spotify.song} - ${d.spotify.artist}`;
+                            spotifyBox.style.display = 'flex';
+                        }
+                    }
+                })
+                .catch(() => {});
+        }
+
+        // --- 3. 3D Card Tilt Effect ---
+        
+
+        // --- 4. Custom Cursor & Click Sparkles ---
+        
+
+        
+
+        // --- 5. Dynamic Canvas Backgrounds ---
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas ? canvas.getContext('2d') : null;
+        const bgType = "solid";
+
+        if (canvas && ctx && ['stars', 'snow', 'rain', 'particles'].includes(bgType)) {
+            let width = canvas.width = window.innerWidth;
+            let height = canvas.height = window.innerHeight;
+
+            window.addEventListener('resize', () => {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            });
+
+            const items = [];
+            const count = bgType === 'rain' ? 120 : (bgType === 'particles' ? 60 : 100);
+
+            for (let i = 0; i < count; i++) {
+                items.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    size: Math.random() * 2 + 1,
+                    speedX: (Math.random() - 0.5) * (bgType === 'snow' ? 0.8 : 0.4),
+                    speedY: bgType === 'rain' ? Math.random() * 12 + 8 : (bgType === 'snow' ? Math.random() * 1.5 + 0.5 : (Math.random() - 0.5) * 0.5),
+                    opacity: Math.random() * 0.8 + 0.2,
+                    pulse: Math.random() * 0.03
+                });
+            }
+
+            function drawBackground() {
+                ctx.clearRect(0, 0, width, height);
+                if (bgType === 'stars') {
+                    ctx.fillStyle = '#ffffff';
+                    for (let s of items) {
+                        s.opacity += s.pulse;
+                        if (s.opacity > 1 || s.opacity < 0.2) s.pulse = -s.pulse;
+                        ctx.globalAlpha = Math.max(0.1, Math.min(1, s.opacity));
+                        ctx.beginPath();
+                        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                } else if (bgType === 'snow') {
+                    ctx.fillStyle = '#ffffff';
+                    for (let s of items) {
+                        s.x += s.speedX;
+                        s.y += s.speedY;
+                        if (s.y > height) { s.y = -5; s.x = Math.random() * width; }
+                        if (s.x > width) s.x = 0;
+                        if (s.x < 0) s.x = width;
+                        ctx.globalAlpha = s.opacity;
+                        ctx.beginPath();
+                        ctx.arc(s.x, s.y, s.size * 1.3, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                } else if (bgType === 'rain') {
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.2;
+                    for (let r of items) {
+                        r.y += r.speedY;
+                        if (r.y > height) { r.y = -20; r.x = Math.random() * width; }
+                        ctx.globalAlpha = r.opacity * 0.7;
+                        ctx.beginPath();
+                        ctx.moveTo(r.x, r.y);
+                        ctx.lineTo(r.x, r.y + 14);
+                        ctx.stroke();
+                    }
+                } else if (bgType === 'particles') {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.strokeStyle = 'rgba(139, 92, 246, 0.15)';
+                    for (let i = 0; i < items.length; i++) {
+                        let p1 = items[i];
+                        p1.x += p1.speedX;
+                        p1.y += p1.speedY;
+                        if (p1.x < 0 || p1.x > width) p1.speedX = -p1.speedX;
+                        if (p1.y < 0 || p1.y > height) p1.speedY = -p1.speedY;
+                        ctx.globalAlpha = p1.opacity;
+                        ctx.beginPath();
+                        ctx.arc(p1.x, p1.y, p1.size * 1.5, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        for (let j = i + 1; j < items.length; j++) {
+                            let p2 = items[j];
+                            let dx = p1.x - p2.x;
+                            let dy = p1.y - p2.y;
+                            let dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < 110) {
+                                ctx.lineWidth = (1 - dist / 110);
+                                ctx.beginPath();
+                                ctx.moveTo(p1.x, p1.y);
+                                ctx.lineTo(p2.x, p2.y);
+                                ctx.stroke();
+                            }
+                        }
+                    }
+                }
+                requestAnimationFrame(drawBackground);
+            }
+            drawBackground();
+        }
+
+        // --- 6. Typewriter Title Effect ---
+        
+    </script>
+</body>
+</html>
